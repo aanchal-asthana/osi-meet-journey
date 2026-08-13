@@ -61,7 +61,9 @@ export function OsiStack({ side, activeLayer, subLayers = [], completed, onLayer
                   {l.name}
                 </span>
                 {isActive && (
-                  <span className="ring-active size-[7px] shrink-0 rounded-full bg-active" aria-hidden />
+                  <span className="shrink-0 rounded-sm bg-active px-1 py-[1px] font-mono text-[0.55rem] font-bold uppercase tracking-wide text-primary-foreground">
+                    Active
+                  </span>
                 )}
                 {isDone && <span className="text-[0.7rem] text-done">✓</span>}
               </button>
