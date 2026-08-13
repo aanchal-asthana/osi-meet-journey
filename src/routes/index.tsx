@@ -186,58 +186,29 @@ function Index() {
         </div>
       </div>
 
-      {/* Main simulation: steps | stage | current layer */}
-      <div className="grid gap-6 lg:grid-cols-[210px_minmax(0,1fr)_290px]">
-        <div className="order-2 lg:order-1">
-          <StepList
-            current={index + 1}
-            onSelect={(n) => {
-              setStarted(true);
-              setAuto(false);
-              setIndex(n - 1);
-            }}
+      {/* Main simulation: User A + stack | centre | stack + User B */}
+      <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)_240px] lg:items-start">
+        {/* Sender endpoint */}
+        <section className="space-y-3">
+          <MeetStage step={started ? step : STEPS[0]!} started={started} side="a" />
+          <OsiStack
+            side="sender"
+            activeLayer={senderActive}
+            completed={senderDone}
+            onLayerClick={setDialogLayer}
           />
-        </div>
+        </section>
 
-        <div className="order-1 space-y-6 lg:order-2">
-          <div className="grid gap-4 xl:grid-cols-[150px_minmax(0,1fr)_150px]">
-            <div className="hidden xl:block">
-              <OsiStack
-                side="sender"
-                activeLayer={senderActive}
-                completed={senderDone}
-                onLayerClick={setDialogLayer}
-              />
-            </div>
-            <MeetStage step={started ? step : STEPS[0]!} started={started} />
-            <div className="hidden xl:block">
-              <OsiStack
-                side="receiver"
-                activeLayer={receiverActive}
-                subLayers={receiverSubs}
-                completed={receiverDone}
-                onLayerClick={setDialogLayer}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 xl:hidden sm:grid-cols-2">
-            <OsiStack
-              side="sender"
-              activeLayer={senderActive}
-              completed={senderDone}
-              onLayerClick={setDialogLayer}
-            />
-            <OsiStack
-              side="receiver"
-              activeLayer={receiverActive}
-              subLayers={receiverSubs}
-              completed={receiverDone}
-              onLayerClick={setDialogLayer}
-            />
-          </div>
-
+        {/* Centre */}
+        <div className="space-y-4">
+          <CenterPanel step={started ? step : STEPS[0]!} started={started} />
           <NetworkJourney step={step} started={started} />
+          <section className="panel p-3">
+            <h3 className="label-caps">Packet at this step</h3>
+            <div className="mt-2">
+              <PacketView stage={started ? step.packet : "none"} />
+            </div>
+          </section>
 
           {isLast && started && (
             <div className="fade-step border-l-2 border-l-done bg-done-soft/60 px-3 py-2.5">
@@ -253,18 +224,28 @@ function Index() {
           )}
         </div>
 
-        <div className="order-3 space-y-4">
-          <LayerPanel step={step} onOpenLayer={setDialogLayer} />
-          <section className="panel p-3">
-            <h3 className="label-caps">Packet at this step</h3>
-            <div className="mt-2">
-              <PacketView stage={started ? step.packet : "none"} />
-            </div>
-          </section>
-        </div>
+        {/* Receiver endpoint */}
+        <section className="space-y-3">
+          <MeetStage step={started ? step : STEPS[0]!} started={started} side="b" />
+          <OsiStack
+            side="receiver"
+            activeLayer={receiverActive}
+            subLayers={receiverSubs}
+            completed={receiverDone}
+            onLayerClick={setDialogLayer}
+          />
+        </section>
       </div>
 
       <div className="mt-8 space-y-8">
+        <StepList
+          current={index + 1}
+          onSelect={(n) => {
+            setStarted(true);
+            setAuto(false);
+            setIndex(n - 1);
+          }}
+        />
         <EncapDecap step={step} />
         <LayerTable />
 
