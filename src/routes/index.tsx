@@ -9,6 +9,7 @@ import { MeetStage } from "@/components/sim/MeetStage";
 import { NetworkJourney } from "@/components/sim/NetworkJourney";
 import { OsiStack } from "@/components/sim/OsiStack";
 import { PacketView } from "@/components/sim/PacketView";
+import { StepList } from "@/components/sim/StepList";
 import { PHASE_LABEL, STEPS } from "@/lib/osi";
 import { cn } from "@/lib/utils";
 
@@ -188,7 +189,14 @@ function Index() {
       {/* Main simulation: steps | stage | current layer */}
       <div className="grid gap-6 lg:grid-cols-[210px_minmax(0,1fr)_290px]">
         <div className="order-2 lg:order-1">
-          <StepColumn index={index} onSelect={(n) => { setStarted(true); setAuto(false); setIndex(n - 1); }} />
+          <StepList
+            current={index + 1}
+            onSelect={(n) => {
+              setStarted(true);
+              setAuto(false);
+              setIndex(n - 1);
+            }}
+          />
         </div>
 
         <div className="order-1 space-y-6 lg:order-2">
@@ -292,13 +300,4 @@ function Index() {
       <LayerDialog layerNumber={dialogLayer} onClose={() => setDialogLayer(null)} />
     </main>
   );
-}
-
-function StepColumn({ index, onSelect }: { index: number; onSelect: (n: number) => void }) {
-  const StepList = require_StepList();
-  return <StepList current={index + 1} onSelect={onSelect} />;
-}
-
-function require_StepList() {
-  return StepListImpl;
 }
