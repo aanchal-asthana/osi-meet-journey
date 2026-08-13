@@ -200,7 +200,7 @@ function Index() {
         </div>
 
         <div className="order-1 space-y-6 lg:order-2">
-          <div className="grid gap-4 xl:grid-cols-[130px_minmax(0,1fr)_130px]">
+          <div className="grid gap-4 xl:grid-cols-[150px_minmax(0,1fr)_150px]">
             <div className="hidden xl:block">
               <OsiStack
                 side="sender"
