@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from "lucide-react";
+import { CenterPanel } from "@/components/sim/CenterPanel";
 import { EncapDecap } from "@/components/sim/EncapDecap";
 import { LayerDialog } from "@/components/sim/LayerDialog";
-import { LayerPanel } from "@/components/sim/LayerPanel";
 import { LayerTable } from "@/components/sim/LayerTable";
 import { MeetStage } from "@/components/sim/MeetStage";
 import { NetworkJourney } from "@/components/sim/NetworkJourney";
