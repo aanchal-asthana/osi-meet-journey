@@ -112,12 +112,98 @@ function Tile({
   );
 }
 
-export function MeetStage({ step, started }: { step: Step; started: boolean }) {
+export function MeetStage({
+  step,
+  started,
+  side,
+}: {
+  step: Step;
+  started: boolean;
+  side?: "a" | "b";
+}) {
   const aCamOn = started && step.n >= 6;
   const bJoined = step.n >= 3;
   const delivered = step.meet === "received";
   const elapsed = Math.max(0, step.n - 1) * 7;
   const timer = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
+
+  const tileA = (
+    <Tile
+      name="User A"
+      role="Host"
+      src={userA}
+      camOn={aCamOn}
+      micOn={step.n >= 6}
+      highlight={step.phase === "sender" && step.n >= 6}
+      overlay={step.n < 6 ? (step.n === 1 ? "Create a meeting" : "Preparing camera…") : undefined}
+      caption={aCamOn ? "Camera ON — source of the video frame" : "Camera not yet enabled"}
+    />
+  );
+  const tileB = (
+    <Tile
+      name="User B"
+      role="Participant"
+      src={delivered ? userA : userB}
+      camOn={bJoined}
+      micOn={bJoined}
+      highlight={step.phase === "receiver"}
+      pip={delivered ? userB : undefined}
+      overlay={
+        !bJoined
+          ? "Waiting to join"
+          : step.n === 3
+            ? "Joining…"
+            : delivered
+              ? undefined
+              : "Waiting for video…"
+      }
+      caption={
+        delivered
+          ? "Video received — frame from User A rendered on User B's screen"
+          : "Waiting for the video frame from User A"
+      }
+    />
+  );
+
+  if (side) {
+    return (
+      <section className="panel overflow-hidden">
+        <header className="flex items-center justify-between gap-2 border-b border-rule bg-surface px-2.5 py-1.5">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="grid size-4 shrink-0 place-items-center rounded-sm bg-primary text-[0.55rem] font-bold text-primary-foreground">
+              M
+            </span>
+            <span className="truncate text-[0.72rem] font-semibold">
+              {side === "a" ? "User A — Sender" : "User B — Receiver"}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5 text-[0.66rem] text-muted-foreground">
+            <Lock className={cn("size-3", step.n >= 4 && "text-done")} />
+            <span className="font-mono tabular-nums">{timer}</span>
+          </span>
+        </header>
+        <div className="p-2.5">{side === "a" ? tileA : tileB}</div>
+        <footer className="flex items-center justify-between gap-2 border-t border-rule bg-surface px-2.5 py-1.5">
+          <span className="flex items-center gap-1">
+            {[Mic, Video, MonitorUp].map((Icon, i) => (
+              <span
+                key={i}
+                className="grid size-6 place-items-center rounded-sm border border-border bg-card text-ink-soft"
+              >
+                <Icon className="size-3" />
+              </span>
+            ))}
+            <span className="grid size-6 place-items-center rounded-sm bg-destructive text-destructive-foreground">
+              <PhoneOff className="size-3" />
+            </span>
+          </span>
+          <span className="flex items-center gap-1 text-[0.66rem] text-ink-soft">
+            <Users className="size-3" /> {bJoined ? 2 : 1}
+          </span>
+        </footer>
+      </section>
+    );
+  }
 
   return (
     <section className="panel overflow-hidden">
@@ -145,39 +231,8 @@ export function MeetStage({ step, started }: { step: Step; started: boolean }) {
       </header>
 
       <div className="grid gap-3 p-3 sm:grid-cols-2">
-        <Tile
-          name="User A"
-          role="Host"
-          src={userA}
-          camOn={aCamOn}
-          micOn={step.n >= 6}
-          highlight={step.phase === "sender" && step.n >= 6}
-          overlay={step.n < 6 ? (step.n === 1 ? "Create a meeting" : "Preparing camera…") : undefined}
-          caption={aCamOn ? "Camera ON — source of the video frame" : "Camera not yet enabled"}
-        />
-        <Tile
-          name="User B"
-          role="Participant"
-          src={delivered ? userA : userB}
-          camOn={bJoined}
-          micOn={bJoined}
-          highlight={step.phase === "receiver"}
-          pip={delivered ? userB : undefined}
-          overlay={
-            !bJoined
-              ? "Waiting to join"
-              : step.n === 3
-                ? "Joining…"
-                : delivered
-                  ? undefined
-                  : "Waiting for video…"
-          }
-          caption={
-            delivered
-              ? "Video received — frame from User A rendered on User B's screen"
-              : "Waiting for the video frame from User A"
-          }
-        />
+        {tileA}
+        {tileB}
       </div>
 
       <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-rule bg-surface px-3 py-2">
