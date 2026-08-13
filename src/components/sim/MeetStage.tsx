@@ -45,10 +45,10 @@ function Tile({
   src: string;
   camOn: boolean;
   micOn: boolean;
-  overlay?: string;
-  pip?: string;
-  highlight?: boolean;
-  caption?: string;
+  overlay?: string | undefined;
+  pip?: string | undefined;
+  highlight?: boolean | undefined;
+  caption?: string | undefined;
 }) {
   return (
     <figure className="m-0">
