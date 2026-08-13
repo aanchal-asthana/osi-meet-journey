@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { PacketStage } from "@/lib/osi";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +22,11 @@ export function PacketView({ stage }: { stage: PacketStage }) {
   }
 
   const depth = ORDER.indexOf(stage);
-  const shells = ORDER.slice(0, depth + 1).reverse();
+  const shells = ORDER.slice(0, depth + 1);
 
   return (
     <div className="fade-step">
-      {shells.reduce<React.ReactNode>((inner, s, idx) => {
+      {shells.reduce<ReactNode>((inner, s, idx) => {
         const info = SHELL[s as Exclude<PacketStage, "none">];
         const isCore = idx === 0;
         return (
