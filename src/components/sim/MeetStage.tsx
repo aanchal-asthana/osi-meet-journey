@@ -1,4 +1,6 @@
 import { Mic, MicOff, Video, VideoOff, Lock, MonitorUp, PhoneOff, Users, Link2, Check } from "lucide-react";
+import userA from "@/assets/user-a.jpg";
+import userB from "@/assets/user-b.jpg";
 import type { Step } from "@/lib/osi";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +32,7 @@ function statusText(step: Step) {
 function Tile({
   name,
   role,
+  src,
   camOn,
   micOn,
   overlay,
@@ -39,6 +42,7 @@ function Tile({
 }: {
   name: string;
   role: string;
+  src: string;
   camOn: boolean;
   micOn: boolean;
   overlay?: string | undefined;
@@ -55,16 +59,14 @@ function Tile({
         )}
       >
         {camOn ? (
-          <div className="relative flex size-full flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-sky-100 via-indigo-50 to-slate-100">
-            <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(15,23,42,0.03)_50%)] bg-[length:100%_4px]" />
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/50 to-transparent" />
-            <span className="grid size-12 place-items-center rounded-full border border-white/60 bg-white/70 shadow-sm backdrop-blur-sm">
-              <Video className="size-5 text-sky-600" />
-            </span>
-            <span className="relative z-10 mt-2 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-700">
-              Camera active
-            </span>
-          </div>
+          <img
+            src={src}
+            alt={`${name} on the video call`}
+            width={1280}
+            height={720}
+            loading="lazy"
+            className="size-full object-cover"
+          />
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-2 bg-surface">
             <span className="grid size-11 place-items-center rounded-full bg-border font-mono text-sm font-semibold text-ink-soft">
@@ -129,6 +131,7 @@ export function MeetStage({
     <Tile
       name="User A"
       role="Host"
+      src={userA}
       camOn={aCamOn}
       micOn={step.n >= 6}
       highlight={step.phase === "sender" && step.n >= 6}
@@ -140,9 +143,11 @@ export function MeetStage({
     <Tile
       name="User B"
       role="Participant"
+      src={delivered ? userA : userB}
       camOn={bJoined}
       micOn={bJoined}
       highlight={step.phase === "receiver"}
+      pip={delivered ? userB : undefined}
       overlay={
         !bJoined
           ? "Waiting to join"
