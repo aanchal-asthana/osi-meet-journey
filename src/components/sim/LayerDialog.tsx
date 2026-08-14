@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { layer } from "@/lib/osi";
 
 export function LayerDialog({
@@ -12,36 +12,22 @@ export function LayerDialog({
 
   return (
     <Dialog open={l !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg rounded-md">
+      <DialogContent className="max-w-sm rounded-md">
         {l && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-base">
+              <DialogTitle className="text-center text-base tracking-tight">
                 Layer {l.n} — {l.name.toUpperCase()}
               </DialogTitle>
-              <DialogDescription className="text-[0.8rem] leading-relaxed">
-                {l.role}
-              </DialogDescription>
             </DialogHeader>
-            <div className="border-t border-rule pt-3">
-              <h4 className="label-caps">Protocols</h4>
-              <dl className="mt-2 space-y-3">
-                {l.protocols.map((p) => (
-                  <div key={p.abbr}>
-                    <dt className="text-[0.8rem] font-semibold">
-                      {p.abbr}
-                      <span className="ml-1.5 font-normal text-muted-foreground">{p.full}</span>
-                    </dt>
-                    <dd className="text-[0.75rem] leading-snug text-muted-foreground">
-                      {p.purpose}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="mt-3 text-[0.68rem] text-muted-foreground">
-                PDU at this layer: {l.pdu}
-              </p>
-            </div>
+            <dl className="space-y-3 border-t border-rule pt-3">
+              {l.protocols.map((p) => (
+                <div key={p.abbr}>
+                  <dt className="text-[0.82rem] font-semibold">{p.abbr}</dt>
+                  <dd className="text-[0.75rem] text-muted-foreground">{p.full}</dd>
+                </div>
+              ))}
+            </dl>
           </>
         )}
       </DialogContent>
