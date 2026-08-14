@@ -1,21 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Play, Pause, SkipBack, SkipForward, RotateCcw } from "lucide-react";
-import { CenterPanel } from "@/components/sim/CenterPanel";
-import { EncapDecap } from "@/components/sim/EncapDecap";
+import { useCallback, useEffect, useState } from "react";
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, Check } from "lucide-react";
+import { FrameTravel } from "@/components/sim/FrameTravel";
 import { LayerDialog } from "@/components/sim/LayerDialog";
-import { LayerTable } from "@/components/sim/LayerTable";
 import { MeetStage } from "@/components/sim/MeetStage";
-import { NetworkJourney } from "@/components/sim/NetworkJourney";
 import { OsiStack } from "@/components/sim/OsiStack";
-import { PacketView } from "@/components/sim/PacketView";
-import { StepList } from "@/components/sim/StepList";
-import { PHASE_LABEL, STEPS } from "@/lib/osi";
+import { STEPS } from "@/lib/osi";
 import { cn } from "@/lib/utils";
 
 const TITLE = "Google Meet – OSI Model Simulation";
 const DESC =
-  "Interactive Computer Networks lab simulation: follow a video frame from User A's camera to User B's screen through all 7 OSI layers.";
+  "Interactive OSI simulation: watch a single video frame travel down User A's 7 OSI layers and back up User B's 7 layers.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,20 +26,23 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const SENDER_ORDER = [7, 6, 5, 4, 3, 2, 1];
-const RECEIVER_ORDER = [1, 2, 3, 4, 5, 6, 7];
+const SENDER = [7, 6, 5, 4, 3, 2, 1];
+const RECEIVER = [1, 2, 3, 4, 5, 6, 7];
+const TOTAL = 15; // 0-6 sender, 7 transmission, 8-14 receiver
+
+/** Reused Meet visuals: camera-ready step for the journey, delivered step at the end. */
+const STEP_LIVE = STEPS[5]!;
+const STEP_DONE = STEPS[18]!;
 
 function Index() {
-  const [index, setIndex] = useState(0);
+  const [i, setI] = useState(0);
   const [started, setStarted] = useState(false);
   const [auto, setAuto] = useState(false);
   const [dialogLayer, setDialogLayer] = useState<number | null>(null);
 
-  const step = STEPS[index]!;
-  const isLast = index === STEPS.length - 1;
-
-  const next = useCallback(() => setIndex((i) => Math.min(i + 1, STEPS.length - 1)), []);
-  const prev = useCallback(() => setIndex((i) => Math.max(i - 1, 0)), []);
+  const isLast = i === TOTAL - 1;
+  const next = useCallback(() => setI((v) => Math.min(v + 1, TOTAL - 1)), []);
+  const prev = useCallback(() => setI((v) => Math.max(v - 1, 0)), []);
 
   useEffect(() => {
     if (!auto) return;
@@ -52,87 +50,89 @@ function Index() {
       setAuto(false);
       return;
     }
-    const t = setTimeout(next, 2400);
+    const t = setTimeout(next, i === 7 ? 1600 : 1100);
     return () => clearTimeout(t);
-  }, [auto, isLast, index, next]);
+  }, [auto, isLast, i, next]);
 
-  const start = () => {
-    setStarted(true);
-    setIndex(0);
-  };
-  const restart = () => {
+  const transmitting = started && i === 7;
+  const phase: "sender" | "transmission" | "receiver" = !started
+    ? "sender"
+    : i < 7
+      ? "sender"
+      : i === 7
+        ? "transmission"
+        : "receiver";
+
+  const senderPos = started ? Math.min(i, 6) : -1;
+  const receiverPos = started && i > 7 ? i - 8 : -1;
+
+  const senderActive = started && i < 7 ? SENDER[i]! : null;
+  const receiverActive = receiverPos >= 0 ? RECEIVER[receiverPos]! : null;
+  const senderDone = started ? SENDER.slice(0, Math.max(0, Math.min(i, 7))) : [];
+  const receiverDone = receiverPos > 0 ? RECEIVER.slice(0, receiverPos) : [];
+
+  const activeLayer = senderActive ?? receiverActive ?? (transmitting ? 1 : 7);
+  const delivered = started && isLast;
+
+  const status =
+    !started
+      ? "Ready"
+      : phase === "sender"
+        ? "Sender — Encapsulation"
+        : phase === "transmission"
+          ? "Transmission"
+          : "Receiver — Decapsulation";
+
+  const meetStep = delivered ? STEP_DONE : STEP_LIVE;
+
+  const reset = () => {
     setStarted(false);
     setAuto(false);
-    setIndex(0);
+    setI(0);
   };
 
-  const { senderActive, senderDone, receiverActive, receiverDone, receiverSubs } = useMemo(() => {
-    if (!started) {
-      return {
-        senderActive: null as number | null,
-        senderDone: [] as number[],
-        receiverActive: null as number | null,
-        receiverDone: [] as number[],
-        receiverSubs: [] as number[],
-      };
-    }
-    if (step.phase === "sender") {
-      const pos = SENDER_ORDER.indexOf(step.layer ?? 7);
-      return {
-        senderActive: step.layer,
-        senderDone: SENDER_ORDER.slice(0, pos),
-        receiverActive: null,
-        receiverDone: [],
-        receiverSubs: [],
-      };
-    }
-    if (step.phase === "network") {
-      return {
-        senderActive: null,
-        senderDone: SENDER_ORDER,
-        receiverActive: null,
-        receiverDone: [],
-        receiverSubs: [],
-      };
-    }
-    const subs = step.subLayers ?? [];
-    const highest = Math.max(step.layer ?? 1, ...subs, 1);
-    const pos = RECEIVER_ORDER.indexOf(highest);
-    return {
-      senderActive: null,
-      senderDone: SENDER_ORDER,
-      receiverActive: step.layer,
-      receiverDone: RECEIVER_ORDER.slice(0, pos),
-      receiverSubs: subs,
-    };
-  }, [started, step]);
-
   return (
-    <main className="mx-auto max-w-[1360px] px-4 pb-16 pt-8 sm:px-6">
-      <header className="border-b border-border pb-5">
+    <main className="mx-auto max-w-[1180px] px-4 pb-14 pt-7 sm:px-6">
+      <header className="border-b border-border pb-4">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{TITLE}</h1>
-        <p className="mt-2 max-w-3xl text-[0.85rem] leading-relaxed text-muted-foreground">
-          Follow a video frame from User A&apos;s camera to User B&apos;s screen through the 7-layer
-          OSI model.
+        <p className="mt-1.5 text-[0.82rem] text-muted-foreground">
+          One video frame travels down User A&apos;s OSI stack and up User B&apos;s stack.
         </p>
       </header>
 
-      {/* Controls */}
-      <div className="sticky top-0 z-20 -mx-4 mb-6 flex flex-wrap items-center gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="mb-6 mt-4 flex flex-wrap items-center gap-2">
         {!started ? (
           <button
             type="button"
-            onClick={start}
+            onClick={() => {
+              setStarted(true);
+              setI(0);
+              setAuto(true);
+            }}
             className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-3 py-1.5 text-[0.78rem] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            <Play className="size-3.5" /> Start simulation
+            <Play className="size-3.5" /> Start
           </button>
         ) : (
           <>
             <button
               type="button"
+              onClick={() => setAuto((a) => !a)}
+              disabled={isLast}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[0.78rem] font-medium transition-colors disabled:opacity-45",
+                auto
+                  ? "border-active bg-active-soft text-active"
+                  : "border-border bg-card hover:bg-secondary",
+              )}
+            >
+              {auto ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+              {auto ? "Pause" : "Play"}
+            </button>
+            <button
+              type="button"
               onClick={prev}
-              disabled={index === 0}
+              disabled={i === 0}
               className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-[0.78rem] font-medium transition-colors hover:bg-secondary disabled:opacity-45"
             >
               <SkipBack className="size-3.5" /> Previous
@@ -141,140 +141,90 @@ function Index() {
               type="button"
               onClick={next}
               disabled={isLast}
-              className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-3 py-1.5 text-[0.78rem] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-45"
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-[0.78rem] font-medium transition-colors hover:bg-secondary disabled:opacity-45"
             >
-              Next step <SkipForward className="size-3.5" />
+              Next <SkipForward className="size-3.5" />
             </button>
             <button
               type="button"
-              onClick={() => setAuto((a) => !a)}
-              disabled={isLast}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[0.78rem] font-medium transition-colors disabled:opacity-45",
-                auto ? "border-active bg-active-soft text-active" : "border-border bg-card hover:bg-secondary",
-              )}
-            >
-              {auto ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-              {auto ? "Pause" : "Auto play"}
-            </button>
-            <button
-              type="button"
-              onClick={restart}
+              onClick={reset}
               className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-[0.78rem] font-medium transition-colors hover:bg-secondary"
             >
-              <RotateCcw className="size-3.5" /> Restart
+              <RotateCcw className="size-3.5" /> Reset
             </button>
           </>
         )}
-        <div className="ml-auto flex items-center gap-3">
-          <span className="font-mono text-[0.72rem] tabular-nums text-muted-foreground">
-            Step {started ? step.n : 0} of {STEPS.length}
-          </span>
-          <span
-            className={cn(
-              "text-[0.7rem] font-semibold uppercase tracking-wide",
-              !started
-                ? "text-muted-foreground"
-                : step.phase === "network"
-                  ? "text-net"
+        <span
+          className={cn(
+            "ml-auto text-[0.7rem] font-semibold uppercase tracking-wide",
+            !started
+              ? "text-muted-foreground"
+              : phase === "transmission"
+                ? "text-net"
+                : delivered
+                  ? "text-done"
                   : "text-active",
+          )}
+        >
+          {delivered ? "Video received" : status}
+        </span>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)]">
+        <MeetStage step={meetStep} started={started} side="a" />
+        <div className="hidden lg:block" />
+        <MeetStage step={meetStep} started={started} side="b" />
+      </div>
+
+      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)] lg:items-start">
+        <OsiStack
+          side="sender"
+          activeLayer={senderActive}
+          completed={senderDone}
+          onLayerClick={setDialogLayer}
+        />
+
+        <div>
+          {/* spacer matching the stack headers so the frame aligns with layer rows */}
+          <div className="hidden pb-2 text-[0.8rem] font-semibold lg:block" aria-hidden>
+            &nbsp;
+          </div>
+          <div className="mt-3">
+            <FrameTravel
+              activeLayer={activeLayer}
+              sideOfFrame={phase === "receiver" ? "receiver" : "sender"}
+              started={started}
+              transmitting={transmitting}
+              delivered={delivered}
+            />
+          </div>
+          <p
+            className={cn(
+              "mt-2 text-center text-[0.68rem] font-medium",
+              transmitting ? "text-net" : delivered ? "text-done" : "text-muted-foreground",
             )}
           >
-            {started ? PHASE_LABEL[step.phase] : "Ready"}
-          </span>
-        </div>
-      </div>
-
-      {/* Main simulation: User A + stack | centre | stack + User B */}
-      <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)_240px] lg:items-start">
-        {/* Sender endpoint */}
-        <section className="space-y-3">
-          <MeetStage step={started ? step : STEPS[0]!} started={started} side="a" />
-          <OsiStack
-            side="sender"
-            activeLayer={senderActive}
-            completed={senderDone}
-            onLayerClick={setDialogLayer}
-          />
-        </section>
-
-        {/* Centre */}
-        <div className="space-y-4">
-          <CenterPanel step={started ? step : STEPS[0]!} started={started} />
-          <NetworkJourney step={step} started={started} />
-          <section className="panel p-3">
-            <h3 className="label-caps">Packet at this step</h3>
-            <div className="mt-2">
-              <PacketView stage={started ? step.packet : "none"} />
-            </div>
-          </section>
-
-          {isLast && started && (
-            <div className="fade-step border-l-2 border-l-done bg-done-soft/60 px-3 py-2.5">
-              <p className="text-[0.8rem] font-semibold text-foreground">
-                ✓ Video frame successfully delivered from User A to User B.
-              </p>
-              <p className="mt-1 text-[0.75rem] leading-relaxed text-ink-soft">
-                At the sender, data moves down the OSI stack through encapsulation. After
-                transmission across the network, the receiver processes the data upward through
-                decapsulation until the application can display the video.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Receiver endpoint */}
-        <section className="space-y-3">
-          <MeetStage step={started ? step : STEPS[0]!} started={started} side="b" />
-          <OsiStack
-            side="receiver"
-            activeLayer={receiverActive}
-            subLayers={receiverSubs}
-            completed={receiverDone}
-            onLayerClick={setDialogLayer}
-          />
-        </section>
-      </div>
-
-      <div className="mt-8 space-y-8">
-        <StepList
-          current={index + 1}
-          onSelect={(n) => {
-            setStarted(true);
-            setAuto(false);
-            setIndex(n - 1);
-          }}
-        />
-        <EncapDecap step={step} />
-        <LayerTable />
-
-        <section>
-          <h2 className="border-b border-rule pb-2 text-sm font-semibold tracking-tight">
-            Final takeaways
-          </h2>
-          <ul className="mt-3 grid gap-2 text-[0.8rem] leading-relaxed text-ink-soft sm:grid-cols-2">
-            <li className="border-l-2 border-l-rule pl-3">
-              User A: camera → 7 OSI layers → network → 7 OSI layers → User B: video displayed.
-            </li>
-            <li className="border-l-2 border-l-rule pl-3">
-              Encapsulation adds a header at each layer on the way down; decapsulation removes one at
-              each layer on the way up.
-            </li>
-            <li className="border-l-2 border-l-rule pl-3">
-              Intermediate devices (routers, ISP nodes) forward the packet without ever inspecting the
-              application payload.
-            </li>
-            <li className="border-l-2 border-l-rule pl-3">
-              Real-time video prefers low-latency transport, so a lost frame is tolerated rather than
-              retransmitted.
-            </li>
-          </ul>
-          <p className="mt-4 border-t border-rule pt-3 text-[0.7rem] leading-relaxed text-muted-foreground">
-            This is an educational OSI-model representation of a modern video-conferencing system.
-            Real-world Google Meet networking uses modern Internet protocols and architectures that do
-            not map perfectly one-to-one onto the seven OSI layers.
+            {transmitting ? (
+              "Transmission complete — frame received"
+            ) : delivered ? (
+              <span className="inline-flex items-center gap-1">
+                <Check className="size-3" /> Video received
+              </span>
+            ) : started ? (
+              phase === "sender" ? "Moving down: L7 → L1" : "Moving up: L1 → L7"
+            ) : (
+              "Press Start"
+            )}
           </p>
-        </section>
+        </div>
+
+        <OsiStack
+          side="receiver"
+          activeLayer={receiverActive}
+          subLayers={[]}
+          completed={receiverDone}
+          onLayerClick={setDialogLayer}
+        />
       </div>
 
       <LayerDialog layerNumber={dialogLayer} onClose={() => setDialogLayer(null)} />
