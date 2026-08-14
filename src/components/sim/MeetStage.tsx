@@ -1,6 +1,4 @@
 import { Mic, MicOff, Video, VideoOff, Lock, MonitorUp, PhoneOff, Users, Link2, Check } from "lucide-react";
-import userA from "@/assets/user-a.jpg";
-import userB from "@/assets/user-b.jpg";
 import type { Step } from "@/lib/osi";
 import { cn } from "@/lib/utils";
 
