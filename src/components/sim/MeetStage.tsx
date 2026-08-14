@@ -1,6 +1,4 @@
 import { Mic, MicOff, Video, VideoOff, Lock, MonitorUp, PhoneOff, Users, Link2, Check } from "lucide-react";
-import userA from "@/assets/user-a.jpg";
-import userB from "@/assets/user-b.jpg";
 import type { Step } from "@/lib/osi";
 import { cn } from "@/lib/utils";
 
@@ -29,26 +27,46 @@ function statusText(step: Step) {
   }
 }
 
+function LiveFeed({ name, tone }: { name: string; tone: "a" | "b" }) {
+  return (
+    <div
+      className={cn(
+        "flex size-full flex-col items-center justify-center gap-2",
+        tone === "a"
+          ? "bg-[linear-gradient(135deg,var(--active-soft),var(--surface))]"
+          : "bg-[linear-gradient(135deg,var(--done-soft),var(--surface))]",
+      )}
+    >
+      <span className="grid size-12 place-items-center rounded-full border border-border bg-card font-mono text-base font-semibold text-ink-soft">
+        {name.slice(-1)}
+      </span>
+      <span className="flex items-center gap-1 text-[0.66rem] font-medium text-ink-soft">
+        <span className="size-1.5 animate-pulse rounded-full bg-destructive" /> Live camera feed
+      </span>
+    </div>
+  );
+}
+
 function Tile({
   name,
   role,
-  src,
   camOn,
   micOn,
   overlay,
   pip,
   highlight,
   caption,
+  tone,
 }: {
   name: string;
   role: string;
-  src: string;
   camOn: boolean;
   micOn: boolean;
   overlay?: string | undefined;
   pip?: string | undefined;
   highlight?: boolean | undefined;
   caption?: string | undefined;
+  tone: "a" | "b";
 }) {
   return (
     <figure className="m-0">
@@ -59,14 +77,7 @@ function Tile({
         )}
       >
         {camOn ? (
-          <img
-            src={src}
-            alt={`${name} on the video call`}
-            width={1280}
-            height={720}
-            loading="lazy"
-            className="size-full object-cover"
-          />
+          <LiveFeed name={name} tone={tone} />
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-2 bg-surface">
             <span className="grid size-11 place-items-center rounded-full bg-border font-mono text-sm font-semibold text-ink-soft">
@@ -85,14 +96,9 @@ function Tile({
         )}
 
         {pip && (
-          <img
-            src={pip}
-            alt=""
-            width={1280}
-            height={720}
-            loading="lazy"
-            className="absolute right-2 top-2 h-12 w-20 rounded border border-card/70 object-cover shadow-sm"
-          />
+          <span className="absolute right-2 top-2 grid h-12 w-20 place-items-center rounded border border-border bg-card text-[0.6rem] font-medium text-ink-soft shadow-sm">
+            {pip}
+          </span>
         )}
 
         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-foreground/70 to-transparent px-2.5 py-2">
