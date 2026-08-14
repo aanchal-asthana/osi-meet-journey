@@ -110,8 +110,7 @@ function Index() {
   return (
     <main className="mx-auto max-w-[1360px] px-4 pb-16 pt-8 sm:px-6">
       <header className="border-b border-border pb-5">
-        <p className="label-caps">Computer Networks Laboratory · Case Study</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{TITLE}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{TITLE}</h1>
         <p className="mt-2 max-w-3xl text-[0.85rem] leading-relaxed text-muted-foreground">
           Follow a video frame from User A&apos;s camera to User B&apos;s screen through the 7-layer
           OSI model.
