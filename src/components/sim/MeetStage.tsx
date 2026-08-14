@@ -129,7 +129,6 @@ export function MeetStage({
     <Tile
       name="User A"
       role="Host"
-      src={userA}
       camOn={aCamOn}
       micOn={step.n >= 6}
       highlight={step.phase === "sender" && step.n >= 6}
@@ -141,11 +140,9 @@ export function MeetStage({
     <Tile
       name="User B"
       role="Participant"
-      src={delivered ? userA : userB}
       camOn={bJoined}
       micOn={bJoined}
       highlight={step.phase === "receiver"}
-      pip={delivered ? userB : undefined}
       overlay={
         !bJoined
           ? "Waiting to join"
